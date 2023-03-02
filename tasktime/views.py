@@ -8,7 +8,7 @@ from .models import Projects, Cycles, Tasks
 
 
 # Create your views here.
-class ProjectsView(ModelViewSet):
+class ProjectsView(ModelViewSet):   # pylint: disable=R0901
     serializer_class = ProjectsSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'public_id'
@@ -45,8 +45,7 @@ class ProjectsView(ModelViewSet):
                 data=serializer.data,
                 status=status.HTTP_201_CREATED
             )
-        else:
-            return Response(
-                data=serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(
+            data=serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
