@@ -120,7 +120,7 @@ class Cycles(CustomUserLogBaseModel):
         """
         # Verifies whether end datetime is none or not
         if self.dt_end is None:
-            raise ValueError("End datetime is none")
+            return 0
         if self.dt_start > self.dt_end:
             raise ValueError(
                 "Start datetime is greater than corresponding end datetime"

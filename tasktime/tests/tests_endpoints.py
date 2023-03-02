@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import pytz
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -63,6 +66,13 @@ class TasktimeEndpointsTest(APITestCase):
             modified_by=cls.user_1,
             is_active=True,
             project=cls.project_4
+        )
+        cls.cycle_1 = Cycles.objects.create(
+            user=cls.user_1,
+            is_active=True,
+            task=cls.task_1,
+            dt_start=datetime(2023, 2, 2, 6, tzinfo=pytz.UTC),
+            dt_end=datetime(2023, 2, 2, 7, 30, tzinfo=pytz.UTC)
         )
 
     def test_without_authentication(self):
@@ -251,6 +261,90 @@ class TasktimeEndpointsTest(APITestCase):
         )
         response = self.client.delete(
             url,
+        )
+        self.assertEqual(
+            status.HTTP_204_NO_CONTENT,
+            response.status_code
+        )
+
+    def test_cycle_create(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse('cycles-list')
+        correct_data = {
+            'task': self.task_1.id,
+            'dt_start': datetime(2023, 2, 2, 10, tzinfo=pytz.UTC)
+        }
+        wrong_data = {
+            'task': self.task_3.id,
+            'dt_start': datetime(2023, 2, 2, 9, tzinfo=pytz.UTC),
+            'dt_end': datetime(2023, 2, 2, 8, tzinfo=pytz.UTC)
+        }
+        response_correct = self.client.post(
+            url,
+            data=correct_data,
+            format="json"
+        )
+        self.assertEqual(
+            status.HTTP_201_CREATED,
+            response_correct.status_code
+        )
+        response_wrong = self.client.post(
+            url,
+            data=wrong_data,
+            format="json"
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response_wrong.status_code
+        )
+
+    def test_cycle_patch(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse(
+            'cycles-detail',
+            kwargs={
+                'public_id': self.cycle_1.public_id
+            }
+        )
+        response_correct = self.client.patch(
+            url,
+            format="json",
+            data={
+                'dt_end': datetime(2023, 2, 3, 7, 30, tzinfo=pytz.UTC)
+            }
+        )
+        self.assertEqual(
+            status.HTTP_200_OK,
+            response_correct.status_code
+        )
+        response_error = self.client.patch(
+            url,
+            format="json",
+            data={
+                'dt_end': datetime(2023, 2, 1, 7, 30, tzinfo=pytz.UTC)
+            }
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response_error.status_code
+        )
+
+    def test_cycle_delete(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse(
+            'cycles-detail',
+            kwargs={
+                'public_id': self.cycle_1.public_id
+            }
+        )
+        response = self.client.delete(
+            url
         )
         self.assertEqual(
             status.HTTP_204_NO_CONTENT,
