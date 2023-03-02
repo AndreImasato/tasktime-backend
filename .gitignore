@@ -1,0 +1,30 @@
+.python-version
+
+.vscode
+
+__pycache__
+
+*/migrations/*
+!**/migrations/__init__.py
+
+# Envs
+envs/prod/*.env
+!envs/prod/.gitkeep
+envs/stg/*.env
+!envs/stg/.gitkeep
+envs/local/*.env
+!envs/local/.gitkeep
+envs/stack/*.env
+!envs/stack/.gitkeep
+!**/**/.env.template
+
+# SQLite
+*.sqlite3
+
+*.json
+
+# Celery
+celerybeat*
+
+staticfiles/
+mediafiles/
