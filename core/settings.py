@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     # Custom applications
     'users',
     'common',
+    'tasktime',
 ]
 
 MIDDLEWARE = [
