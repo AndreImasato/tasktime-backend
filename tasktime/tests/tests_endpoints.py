@@ -21,10 +21,12 @@ class TasktimeEndpointsTest(APITestCase):
             is_active=True
         )
         cls.project_1 = ProjectFactory(
+            is_active=True,
             created_by=cls.user_1,
             modified_by=cls.user_1
         )
         cls.project_2 = ProjectFactory(
+            is_active=True,
             created_by=cls.user_2,
             modified_by=cls.user_2
         )
@@ -32,6 +34,35 @@ class TasktimeEndpointsTest(APITestCase):
             created_by=cls.user_1,
             modified_by=cls.user_1,
             is_active=False
+        )
+        cls.project_4 = ProjectFactory(
+            created_by=cls.user_1,
+            modified_by=cls.user_1,
+            is_active=True
+        )
+        cls.task_1 = TaskFactory(
+            created_by=cls.user_1,
+            modified_by=cls.user_1,
+            is_active=True,
+            project=cls.project_1
+        )
+        cls.task_2 = TaskFactory(
+            created_by=cls.user_1,
+            modified_by=cls.user_1,
+            is_active=False,
+            project=cls.project_1
+        )
+        cls.task_3 = TaskFactory(
+            created_by=cls.user_1,
+            modified_by=cls.user_1,
+            is_active=True,
+            project=cls.project_2
+        )
+        cls.task_4 = TaskFactory(
+            created_by=cls.user_1,
+            modified_by=cls.user_1,
+            is_active=True,
+            project=cls.project_4
         )
 
     def test_without_authentication(self):
@@ -64,7 +95,7 @@ class TasktimeEndpointsTest(APITestCase):
         )
         self.assertEqual(
             len(response.data),
-            1
+            2
         )
 
     def test_projects_create(self):
@@ -151,6 +182,75 @@ class TasktimeEndpointsTest(APITestCase):
         )
         response = self.client.delete(
             url
+        )
+        self.assertEqual(
+            status.HTTP_204_NO_CONTENT,
+            response.status_code
+        )
+
+    def test_task_create(self):
+        """
+        Test for task creation
+        """
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse('tasks-list')
+        response = self.client.post(
+            url,
+            data={
+                'name': "Task Test",
+                'project': self.project_1.id
+            },
+            format="json"
+        )
+        self.assertEqual(
+            status.HTTP_201_CREATED,
+            response.status_code
+        )
+        self.assertDictContainsSubset(
+            {'name': "Task Test"},
+            response.data
+        )
+
+    def test_task_patch(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse(
+            'tasks-detail',
+            kwargs={
+                'public_id': self.task_1.public_id
+            }
+        )
+        response = self.client.patch(
+            url,
+            data={
+                'name': 'Patched Task'
+            },
+            format="json"
+        )
+        self.assertEqual(
+            status.HTTP_200_OK,
+            response.status_code
+        )
+        self.assertDictContainsSubset(
+            {'name': 'Patched Task'},
+            response.data
+        )
+
+    def test_task_delete(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse(
+            'tasks-detail',
+            kwargs={
+                'public_id': self.task_1.public_id
+            }
+        )
+        response = self.client.delete(
+            url,
         )
         self.assertEqual(
             status.HTTP_204_NO_CONTENT,

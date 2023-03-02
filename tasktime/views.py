@@ -49,3 +49,33 @@ class ProjectsView(ModelViewSet):   # pylint: disable=R0901
             data=serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class TasksView(ModelViewSet):
+    serializer_class = TasksSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "public_id"
+
+    def get_queryset(self):
+        user = self.request.user
+        self.queryset = Tasks.objects.filter(
+            created_by=user,
+            is_active=True
+        )
+        return self.queryset
+
+    def create(self, request, *args, **kwargs):
+        request.data['user'] = request.user.id
+        serializer = self.serializer_class(
+            data=request.data
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data=serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data=serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )

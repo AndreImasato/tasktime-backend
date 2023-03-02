@@ -13,6 +13,13 @@ class CyclesSerializer(serializers.ModelSerializer):
     parsed_duration = serializers.CharField(
         read_only=True
     )
+    is_active = serializers.BooleanField(
+        default=True
+    )
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        write_only=True
+    )
 
     class Meta:
         model = Cycles
@@ -36,6 +43,13 @@ class TasksSerializer(serializers.ModelSerializer):
     cycles = CyclesSerializer(
         many=True,
         read_only=True
+    )
+    is_active = serializers.BooleanField(
+        default=True
+    )
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        write_only=True
     )
 
     class Meta:
