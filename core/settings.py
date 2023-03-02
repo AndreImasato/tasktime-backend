@@ -23,7 +23,7 @@ env = environ.Env()
 # Defines whether it will read a .env file
 ENVIRONMENT = os.environ.get('ENVIRONMENT', 'local')
 if ENVIRONMENT == 'local':
-    env_path = os.path.join(BASE_DIR, 'envs', 'local', '.env')    
+    env_path = os.path.join(BASE_DIR, 'envs', 'local', '.env')
 # Defines more handlers (i.e.: "production", "staging", "development",
 # "docker", etc)
 elif ENVIRONMENT == 'docker':
