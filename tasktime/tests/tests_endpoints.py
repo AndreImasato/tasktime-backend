@@ -46,8 +46,6 @@ class TasktimeEndpointsTest(APITestCase):
             response.status_code,
             status.HTTP_401_UNAUTHORIZED
         )
-        #TODO do the same for tasks
-        #TODO do the same for cycles
 
     def test_projects_list(self):
         """
@@ -84,7 +82,6 @@ class TasktimeEndpointsTest(APITestCase):
             },
             format="json"
         )
-        print(response.data)
         self.assertEqual(
             response.status_code,
             status.HTTP_201_CREATED
@@ -92,4 +89,70 @@ class TasktimeEndpointsTest(APITestCase):
         self.assertDictContainsSubset(
             {'name': 'Test Project'},
             response.data
+        )
+
+    def test_project_patch(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse(
+            'projects-detail',
+            kwargs={
+                'public_id': self.project_1.public_id
+            }
+        )
+        response = self.client.patch(
+            url,
+            data={
+                'name': 'Patched Project'
+            },
+            format='json'
+        )
+        self.assertEqual(
+            status.HTTP_200_OK,
+            response.status_code
+        )
+        self.assertDictContainsSubset(
+            {'name': 'Patched Project'},
+            response.data
+        )
+
+    def test_project_patch_from_other_user(self):
+        self.client.force_authenticate(
+            user=self.user_2
+        )
+        url = reverse(
+            'projects-detail',
+            kwargs={
+                'public_id': self.project_1.public_id
+            }
+        )
+        response = self.client.patch(
+            url,
+            data={
+                'name': "Other user project"
+            },
+            format="json"
+        )
+        self.assertEqual(
+            status.HTTP_404_NOT_FOUND,
+            response.status_code
+        )
+
+    def test_project_delete(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse(
+            'projects-detail',
+            kwargs={
+                'public_id': self.project_1.public_id
+            },
+        )
+        response = self.client.delete(
+            url
+        )
+        self.assertEqual(
+            status.HTTP_204_NO_CONTENT,
+            response.status_code
         )

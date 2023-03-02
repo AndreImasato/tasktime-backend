@@ -7,12 +7,19 @@ from .serializers import CyclesSerializer, ProjectsSerializer, TasksSerializer
 from .models import Projects, Cycles, Tasks
 
 
-#TODO creates a custom permission -> IsOwnerPermission
 # Create your views here.
 class ProjectsView(ModelViewSet):
     serializer_class = ProjectsSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'public_id'
+
+    def get_queryset(self):
+        user = self.request.user
+        self.queryset = Projects.objects.filter(
+            created_by=user,
+            is_active=True
+        )
+        return self.queryset
 
     def list(self, request):
         query_set = Projects.objects.filter(
