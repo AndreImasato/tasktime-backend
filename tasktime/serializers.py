@@ -24,6 +24,7 @@ class CyclesSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if self.partial:
+            # If it is a patch request
             dt_start = attrs.get('dt_start') or self.instance.dt_start
         else:
             dt_start = attrs.get('dt_start')
@@ -31,7 +32,8 @@ class CyclesSerializer(serializers.ModelSerializer):
         if dt_end is not None:
             if dt_end < dt_start:
                 raise serializers.ValidationError(
-                    _("Invalid End datetime: end datetime must not be lesser than start datetime"),
+                    _("Invalid End datetime: end datetime must"
+                      " not be lesser than start datetime"),
                     code="invalid_end_datetime"
                 )
             return attrs

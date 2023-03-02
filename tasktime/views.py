@@ -51,7 +51,7 @@ class ProjectsView(ModelViewSet):   # pylint: disable=R0901
         )
 
 
-class TasksView(ModelViewSet):
+class TasksView(ModelViewSet):  # pylint: disable=R0901
     serializer_class = TasksSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = "public_id"
@@ -81,7 +81,7 @@ class TasksView(ModelViewSet):
         )
 
 
-class CyclesView(ModelViewSet):
+class CyclesView(ModelViewSet): # pylint: disable=R0901
     serializer_class = CyclesSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = "public_id"
