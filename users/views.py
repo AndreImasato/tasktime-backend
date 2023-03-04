@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -49,6 +50,33 @@ class LoginView(TokenObtainPairView):
             return response
         except InvalidToken as e:
             raise e
+
+
+class LoginWithTokenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user_agent, platform, ip_address = Utils.get_request_info(
+            request
+        )
+        user = request.user
+        data = {
+            "user": user.id,
+            "access_type": AccessTypes.ACCESS_TOKEN,
+            "user_agent": user_agent,
+            "platform": platform,
+            "ip_addres": ip_address
+        }
+        access_log_data = UserAccessLogsSerializer(
+            data=data
+        )
+        if access_log_data.is_valid():
+            access_log_data.save()
+            return Response("OK", status=status.HTTP_200_OK)
+        return Response(
+            access_log_data.errors,
+            status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class UserView(ModelViewSet):   # pylint: disable=R0901

@@ -78,3 +78,22 @@ class LoginTests(APITestCase):
             post_email_login_access_count.count(),
             initial_access_count + 1
         )
+
+    def test_with_token_login(self):
+        """
+        TestCase for login with access Token
+        """
+        self.client.force_authenticate(user=self.test_user)
+        initial_access_count = UserAccessLogs.objects.all().count()
+        response = self.client.post(
+            reverse('token_login')
+        )
+        post_token_login_access_count = UserAccessLogs.objects.all().count()
+        self.assertEqual(
+            status.HTTP_200_OK,
+            response.status_code
+        )
+        self.assertEqual(
+            initial_access_count + 1,
+            post_token_login_access_count
+        )
