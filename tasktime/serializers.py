@@ -41,9 +41,7 @@ class CyclesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cycles
-        exclude = (
-            "id",
-        )
+        fields = "__all__"
         extra_kwargs = {
             "public_id": {"read_only": True},
             "duration": {"read_only": True},
@@ -72,9 +70,7 @@ class TasksSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tasks
-        exclude = (
-            "id",
-        )
+        fields = "__all__"
         extra_kwargs = {
             "public_id": {"read_only": True},
             "duration": {"read_only": True},
@@ -103,9 +99,7 @@ class ProjectsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Projects
-        exclude = (
-            "id",
-        )
+        fields = "__all__"
         extra_kwargs = {
             "public_id": {"read_only": True},
             "duration": {"read_only": True},
