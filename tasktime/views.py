@@ -122,8 +122,10 @@ class DurationRankingView(APIView):
         tasks_summary = Tasks.objects.\
             filter(
                 created_by=user,
+                is_active=True,
                 cycles__created_by=user,
-                cycles__dt_end__gte=models.F('cycles__dt_start')
+                cycles__dt_end__gte=models.F('cycles__dt_start'),
+                cycles__is_active=True
             ).\
             annotate(
                 task_name=models.F('name'),
@@ -136,9 +138,12 @@ class DurationRankingView(APIView):
         projects_summary = Projects.objects.\
             filter(
                 created_by=user,
+                is_active=True,
                 tasks__created_by=user,
+                tasks__is_active=True,
                 tasks__cycles__created_by=user,
-                tasks__cycles__dt_end__gte=models.F('tasks__cycles__dt_start')
+                tasks__cycles__dt_end__gte=models.F('tasks__cycles__dt_start'),
+                tasks__cycles__is_active=True
             ).\
             annotate(
                 project_name=models.F('name'),
@@ -159,6 +164,33 @@ class DurationRankingView(APIView):
                 'labels': [q['task_name'] for q in tasks_summary]
             }
         }
+        return Response(
+            data=data,
+            status=status.HTTP_200_OK
+        )
+
+
+class OpenTasksView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        #TODO detect period (week, month, year, all_time) and filter by it
+        open_tasks = Tasks.objects.\
+            filter(
+                created_by=user,
+                cycles__created_by=user,
+                is_active=True,
+                cycles__is_active=True,
+                cycles__dt_end__isnull=True
+            )
+        data = [
+            {
+                'public_id': q['public_id'],
+                'name': q['name']
+            }
+            for q in open_tasks.values()
+        ]
         return Response(
             data=data,
             status=status.HTTP_200_OK

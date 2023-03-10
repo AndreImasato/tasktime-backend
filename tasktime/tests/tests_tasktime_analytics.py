@@ -95,6 +95,39 @@ class AnalyticsTests(APITestCase):
             dt_start=datetime(2023, 3, 1, 3, tzinfo=pytz.UTC),
             dt_end=datetime(2023, 3, 1, 10, tzinfo=pytz.UTC)
         )
+        cls.tasks['task_10'] = TaskFactory(
+            name="Task 10",
+            project=cls.projects['project_7'],
+            is_active=True,
+            created_by=cls.user_2,
+            modified_by=cls.user_2
+        )
+        cls.tasks['task_11'] = TaskFactory(
+            name="Task 11",
+            project=cls.projects['project_7'],
+            is_active=True,
+            created_by=cls.user_2,
+            modified_by=cls.user_2
+        )
+        Cycles.objects.create(
+            user=cls.user_2,
+            is_active=True,
+            task=cls.tasks['task_10'],
+            dt_start=datetime(2023, 2, 27, 1, tzinfo=pytz.UTC),
+            dt_end=datetime(2023, 2, 27, 2, tzinfo=pytz.UTC)
+        )
+        Cycles.objects.create(
+            user=cls.user_2,
+            is_active=True,
+            task=cls.tasks['task_10'],
+            dt_start=datetime(2023, 3, 1, 1, tzinfo=pytz.UTC)
+        )
+        Cycles.objects.create(
+            user=cls.user_2,
+            is_active=True,
+            task=cls.tasks['task_11'],
+            dt_start=datetime(2023, 3, 1, 4, tzinfo=pytz.UTC)
+        )
         cls.expected_project_ranking = ['Project 2', 'Project 4', 'Project 6', 'Project 5', 'Project 3']
         cls.expected_task_ranking = ['Task 9', 'Task 6', 'Task 5', 'Task 4', 'Task 8']
 
@@ -113,4 +146,17 @@ class AnalyticsTests(APITestCase):
         self.assertEqual(
             tuple(self.expected_task_ranking),
             tuple(response.data['tasks']['labels'])
+        )
+
+    def test_open_tasks(self):
+        self.client.force_authenticate(user=self.user_2)
+        url = reverse('open_tasks')
+        response = self.client.get(url)
+        self.assertEqual(
+            status.HTTP_200_OK,
+            response.status_code
+        )
+        self.assertEqual(
+            set(['Task 10', 'Task 11']),
+            set([_['name'] for _ in response.data])
         )
