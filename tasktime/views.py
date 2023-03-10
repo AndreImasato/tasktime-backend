@@ -1,6 +1,8 @@
+from django.db import models
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Cycles, Projects, Tasks
@@ -108,4 +110,56 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
         return Response(
             data=serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class DurationRankingView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        #TODO detect period (week, month, year, all_time) and filter by it
+        tasks_summary = Tasks.objects.\
+            filter(
+                created_by=user,
+                cycles__created_by=user,
+                cycles__dt_end__gte=models.F('cycles__dt_start')
+            ).\
+            annotate(
+                task_name=models.F('name'),
+                interval=models.Sum(
+                    models.F('cycles__dt_end') - models.F('cycles__dt_start')
+                )
+            ).\
+            values('task_name', 'interval').\
+            order_by('-interval')[0:5]
+        projects_summary = Projects.objects.\
+            filter(
+                created_by=user,
+                tasks__created_by=user,
+                tasks__cycles__created_by=user,
+                tasks__cycles__dt_end__gte=models.F('tasks__cycles__dt_start')
+            ).\
+            annotate(
+                project_name=models.F('name'),
+                interval=models.Sum(
+                    models.F('tasks__cycles__dt_end') -
+                    models.F('tasks__cycles__dt_start')
+                )
+            ).\
+            values('project_name', 'interval').\
+            order_by('-interval')[0:5]
+        data = {
+            'projects': {
+                'series': [q['interval'].seconds for q in projects_summary],
+                'labels': [q['project_name'] for q in projects_summary]
+            },
+            'tasks': {
+                'series': [q['interval'].seconds for q in tasks_summary],
+                'labels': [q['task_name'] for q in tasks_summary]
+            }
+        }
+        return Response(
+            data=data,
+            status=status.HTTP_200_OK
         )
