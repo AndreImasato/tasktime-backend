@@ -183,13 +183,20 @@ class OpenTasksView(APIView):
                 is_active=True,
                 cycles__is_active=True,
                 cycles__dt_end__isnull=True
-            )
+            ).\
+            annotate(
+                project_public_id=models.F(
+                    'project_id__public_id'
+                )
+            ).\
+            values('public_id', 'name', 'project_public_id')
         data = [
             {
                 'public_id': q['public_id'],
-                'name': q['name']
+                'name': q['name'],
+                'project_public_id': q['project_public_id']
             }
-            for q in open_tasks.values()
+            for q in open_tasks
         ]
         return Response(
             data=data,
