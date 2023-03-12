@@ -202,3 +202,45 @@ class OpenTasksView(APIView):
             data=data,
             status=status.HTTP_200_OK
         )
+
+
+class LastModifiedTasks(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        latest_tasks = Tasks.objects.\
+            filter(
+                created_by=user,
+                cycles__created_by=user,
+                is_active=True,
+                cycles__is_active=True,
+            ).\
+            annotate(
+                project_public_id=models.F(
+                    'project_id__public_id'
+                ),
+                last_modified_on=models.F(
+                    'cycles__modified_on'
+                )
+            ).\
+            values(
+                'public_id',
+                'name',
+                'project_public_id',
+                'last_modified_on'
+            ).\
+            order_by('-last_modified_on')[0:5]
+        data = [
+            {
+                'public_id': q['public_id'],
+                'name': q['name'],
+                'project_public_id': q['project_public_id'],
+                'last_modified_on': q['last_modified_on']
+            }
+            for q in latest_tasks
+        ]
+        return Response(
+            data=data,
+            status=status.HTTP_200_OK
+        )

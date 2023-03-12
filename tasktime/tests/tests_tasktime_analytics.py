@@ -160,3 +160,16 @@ class AnalyticsTests(APITestCase):
             set(['Task 10', 'Task 11']),
             set([_['name'] for _ in response.data])
         )
+
+    def test_latest_tasks(self):
+        self.client.force_authenticate(user=self.user_1)
+        url = reverse('latest_tasks')
+        response = self.client.get(url)
+        self.assertEqual(
+            status.HTTP_200_OK,
+            response.status_code
+        )
+        self.assertEqual(
+            ['Task 9', 'Task 8', 'Task 6', 'Task 5', 'Task 4'],
+            [tk['name'] for tk in response.data]
+        )
