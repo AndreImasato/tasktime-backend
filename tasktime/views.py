@@ -1,9 +1,8 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from django.db import models
 from django.db.models.fields import DateField
-from django.db.models.functions import (Cast, ExtractMonth, ExtractWeek,
-                                        ExtractYear)
+from django.db.models.functions import Cast, ExtractMonth
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -351,11 +350,11 @@ class HistogramView(APIView):
             year_agg_total = 0
         #TODO deal when it is the first week of the year
         #TODO convert to the desired timezone
-        #! instead of working with -1, work with datediff or something equivalent
+        last_week = date_target - timedelta(weeks=1)
         last_week_query = cycle_base_query.\
             filter(
-                dt_start__week=current_week - 1,
-                dt_start__year=current_year
+                dt_start__week=last_week.isocalendar()[1],
+                dt_start__year=last_week.year
             ).\
             aggregate(last_week_interval=models.Sum(
                 models.F('dt_end') -
@@ -367,11 +366,11 @@ class HistogramView(APIView):
             last_week_value = 0
         #TODO deal when it is the first month of the year
         #TODO convert to the desired timezone
-        #! instead of working with -1, work with datediff or something equivalent
+        last_month = date_target - timedelta(days=30)
         last_month_query = cycle_base_query.\
             filter(
-                dt_start__month=current_month - 1,
-                dt_start__year=current_year
+                dt_start__month=last_month.month,
+                dt_start__year=last_month.year
             ).\
             aggregate(
                 last_month_interval=models.Sum(
@@ -383,10 +382,10 @@ class HistogramView(APIView):
             last_month_value = last_month_query['last_month_interval'].seconds
         else:
             last_month_value = 0
-        #! instead of working with -1, work with datediff or something equivalent
+        last_year = date_target - timedelta(days=360)
         last_year_query = cycle_base_query.\
             filter(
-                dt_start__year=current_year - 1
+                dt_start__year=last_year.year
             ).\
             aggregate(
                 last_year_interval=models.Sum(
