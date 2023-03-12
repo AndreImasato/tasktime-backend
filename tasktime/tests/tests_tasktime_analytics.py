@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 import pytz
 from django.urls import reverse
@@ -21,6 +21,9 @@ class AnalyticsTests(APITestCase):
             is_active=True
         )
         cls.user_2 = CustomUserFactory(
+            is_active=True
+        )
+        cls.user_3 = CustomUserFactory(
             is_active=True
         )
         cls.projects = {}
@@ -130,6 +133,68 @@ class AnalyticsTests(APITestCase):
         )
         cls.expected_project_ranking = ['Project 2', 'Project 4', 'Project 6', 'Project 5', 'Project 3']
         cls.expected_task_ranking = ['Task 9', 'Task 6', 'Task 5', 'Task 4', 'Task 8']
+        # Last month and week test
+        project_feb = ProjectFactory(
+            name="Project Feb 001",
+            is_active=True,
+            created_by=cls.user_3,
+            modified_by=cls.user_3,
+            created_on=datetime(2023, 2, 22, 1, tzinfo=pytz.UTC),
+            modified_on=datetime(2023, 2, 22, 1, tzinfo=pytz.UTC)
+        )
+        task_feb_001 = TaskFactory(
+            name="Task Feb 001",
+            project=project_feb,
+            is_active=True,
+            created_by=cls.user_3,
+            modified_by=cls.user_3,
+            created_on=datetime(2023, 2, 22, 1, tzinfo=pytz.UTC),
+            modified_on=datetime(2023, 2, 22, 1, tzinfo=pytz.UTC)
+        )
+        Cycles.objects.create(
+            user=cls.user_3,
+            is_active=True,
+            task=task_feb_001,
+            created_on=datetime(2023, 2, 22, 1, tzinfo=pytz.UTC),
+            modified_on=datetime(2023, 2, 22, 1, tzinfo=pytz.UTC),
+            dt_start=datetime(2023, 2, 22, 1, tzinfo=pytz.UTC),
+            dt_end=datetime(2023, 2, 22, 6, tzinfo=pytz.UTC)
+        )
+        project_mar = ProjectFactory(
+            name="Project Mar 001",
+            is_active=True,
+            created_by=cls.user_3,
+            modified_by=cls.user_3,
+            created_on=datetime(2023, 3, 1, 1, tzinfo=pytz.UTC),
+            modified_on=datetime(2023, 3, 1, 1, tzinfo=pytz.UTC)
+        )
+        task_mar_001 = TaskFactory(
+            name="Task Mar 001",
+            project=project_mar,
+            is_active=True,
+            created_by=cls.user_3,
+            modified_by=cls.user_3,
+            created_on=datetime(2023, 3, 1, 1, tzinfo=pytz.UTC),
+            modified_on=datetime(2023, 3, 1, 1, 1, tzinfo=pytz.UTC)
+        )
+        Cycles.objects.create(
+            user=cls.user_3,
+            is_active=True,
+            task=task_mar_001,
+            created_on=datetime(2023, 3, 1, 1, tzinfo=pytz.UTC),
+            modified_on=datetime(2023, 3, 1, 1, tzinfo=pytz.UTC),
+            dt_start=datetime(2023, 3, 1, 1, tzinfo=pytz.UTC),
+            dt_end=datetime(2023, 3, 1, 4, tzinfo=pytz.UTC)
+        )
+        Cycles.objects.create(
+            user=cls.user_3,
+            is_active=True,
+            task=task_mar_001,
+            created_on=datetime(2022, 3, 1, 1, tzinfo=pytz.UTC),
+            modified_on=datetime(2022, 3, 1, 1, tzinfo=pytz.UTC),
+            dt_start=datetime(2022, 3, 1, 1, tzinfo=pytz.UTC),
+            dt_end=datetime(2022, 3, 1, 4, tzinfo=pytz.UTC)
+        )
 
     def test_ranking(self):
         self.client.force_authenticate(user=self.user_1)
@@ -172,4 +237,64 @@ class AnalyticsTests(APITestCase):
         self.assertEqual(
             ['Task 9', 'Task 8', 'Task 6', 'Task 5', 'Task 4'],
             [tk['name'] for tk in response.data]
+        )
+
+    def test_total_time(self):
+        self.client.force_authenticate(user=self.user_3)
+        date_target = date(2023, 3, 3).strftime('%Y-%m-%d')
+        url = reverse(
+            'total_time',
+        )
+        response = self.client.get(
+            url,
+            {'date_target': date_target}
+        )
+        self.assertEqual(
+            status.HTTP_200_OK,
+            response.status_code
+        )
+        #TODO assert week current value and last value
+        # Current value
+        self.assertEqual(
+            10800,
+            response.data['week']['additional_info']['current_value']
+        )
+        # Last value
+        self.assertEqual(
+            18000,
+            response.data['week']['additional_info']['last_value']
+        )
+        #TODO assert month current value and last value
+        self.assertEqual(
+            10800,
+            response.data['month']['additional_info']['current_value']
+        )
+        # Last value
+        self.assertEqual(
+            18000,
+            response.data['month']['additional_info']['last_value']
+        )
+        #TODO assert year current value and last value
+        self.assertEqual(
+            28800,
+            response.data['year']['additional_info']['current_value']
+        )
+        self.assertEqual(
+            28800,
+            response.data['year']['additional_info']['current_value']
+        )
+
+    def test_total_time_first_year_week(self):
+        self.client.force_authenticate(user=self.user_3)
+        date_target = date(2023, 1, 1).strftime('%Y-%m-%d')
+        url = reverse(
+            'total_time'
+        )
+        response = self.client.get(
+            url,
+            {'date_target': date_target}
+        )
+        self.assertEqual(
+            status.HTTP_200_OK,
+            response.status_code
         )

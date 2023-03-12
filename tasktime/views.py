@@ -264,7 +264,6 @@ class HistogramView(APIView):
                 is_active=True,
                 dt_end__gte=models.F('dt_start')
             )
-        #TODO more flexibility for testing
         date_target = request.GET.get('date_target', date.today())
         if isinstance(date_target, str):
             date_target = datetime.strptime(date_target, '%Y-%m-%d')
@@ -362,6 +361,10 @@ class HistogramView(APIView):
                 models.F('dt_end') -
                 models.F('dt_start')
             ))
+        if last_week_query['last_week_interval'] is not None:
+            last_week_value = last_week_query['last_week_interval'].seconds
+        else:
+            last_week_value = 0
         #TODO deal when it is the first month of the year
         #TODO convert to the desired timezone
         #! instead of working with -1, work with datediff or something equivalent
@@ -376,6 +379,10 @@ class HistogramView(APIView):
                     models.F('dt_start')
                 )
             )
+        if last_month_query['last_month_interval'] is not None:
+            last_month_value = last_month_query['last_month_interval'].seconds
+        else:
+            last_month_value = 0
         #! instead of working with -1, work with datediff or something equivalent
         last_year_query = cycle_base_query.\
             filter(
@@ -387,6 +394,10 @@ class HistogramView(APIView):
                     models.F('dt_start')
                 )
             )
+        if last_year_query['last_year_interval'] is not None:
+            last_year_value = last_year_query['last_year_interval'].seconds
+        else:
+            last_year_value = 0
 
         data = {
             'week': {
@@ -396,7 +407,7 @@ class HistogramView(APIView):
                 },
                 'additional_info': {
                     'current_value': week_total,
-                    'last_value': last_week_query['last_week_interval']
+                    'last_value': last_week_value
                 },
             },
             'month': {
@@ -406,7 +417,7 @@ class HistogramView(APIView):
                 },
                 'additional_info': {
                     'current_value': month_total,
-                    'last_value': last_month_query['last_month_interval']
+                    'last_value': last_month_value
                 }
             },
             'year': {
@@ -416,7 +427,7 @@ class HistogramView(APIView):
                 },
                 'additional_info': {
                     'current_value': year_total,
-                    'last_value': last_year_query['last_year_interval']
+                    'last_value': last_year_value
                 }
             }
         }
