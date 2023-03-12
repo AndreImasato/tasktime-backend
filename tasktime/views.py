@@ -1,4 +1,9 @@
+from datetime import date
+
 from django.db import models
+from django.db.models.fields import DateField
+from django.db.models.functions import (Cast, ExtractMonth, ExtractWeek,
+                                        ExtractYear)
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -240,6 +245,150 @@ class LastModifiedTasks(APIView):
             }
             for q in latest_tasks
         ]
+        return Response(
+            data=data,
+            status=status.HTTP_200_OK
+        )
+
+
+class HistogramView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        #TODO detect period
+        user = request.user
+        cycle_base_query = Cycles.objects.\
+            filter(
+                dt_start__isnull=False,
+                created_by=user,
+                is_active=True,
+                dt_end__gte=models.F('dt_start')
+            )
+        #TODO change for input date in querystring parameters
+        #TODO more flexibility for testing
+        current_date = date.today()
+        current_week = current_date.isocalendar()[1]
+        current_month = current_date.month
+        current_year = current_date.year
+
+        # Week
+        #TODO convert to the desired timezone
+        week_query = cycle_base_query.\
+            filter(
+                dt_start__week=current_week,
+                dt_start__year=current_year
+            ).\
+            annotate(day=Cast('dt_start', DateField())).\
+            values('day').\
+            annotate(
+                interval=models.Sum(
+                    models.F('dt_end') -
+                    models.F('dt_start')
+                )
+            ).\
+            values('day', 'interval')
+        # Month
+        #TODO convert to the desired timezone
+        month_query = cycle_base_query.\
+            filter(
+                dt_start__month=current_month,
+                dt_start__year=current_year
+            ).\
+            annotate(
+                day=Cast('dt_start', DateField())
+            ).\
+            values('day').\
+            annotate(
+                interval=models.Sum(
+                    models.F('dt_end') -
+                    models.F('dt_start')
+                )
+            ).\
+            values('day', 'interval')
+        # Year
+        #TODO convert to the desired timezone
+        year_query = cycle_base_query.\
+            filter(
+                dt_start__year=current_year
+            ).\
+            annotate(
+                month=ExtractMonth('dt_start')
+            ).\
+            values('month').\
+            annotate(
+                interval=models.Sum(
+                    models.F('dt_end') -
+                    models.F('dt_start')
+                )
+            ).\
+            values('month', 'interval')
+        #TODO deal when it is the first week of the year
+        #TODO convert to the desired timezone
+        last_week_query = cycle_base_query.\
+            filter(
+                dt_start__week=current_week - 1,
+                dt_start__year=current_year
+            ).\
+            aggregate(last_week_interval=models.Sum(
+                models.F('dt_end') -
+                models.F('dt_start')
+            ))
+        #TODO deal when it is the first month of the year
+        #TODO convert to the desired timezone
+        last_month_query = cycle_base_query.\
+            filter(
+                dt_start__month=current_month - 1,
+                dt_start__year=current_year
+            ).\
+            aggregate(
+                last_month_interval=models.Sum(
+                    models.F('dt_end') -
+                    models.F('dt_start')
+                )
+            )
+        last_year_query = cycle_base_query.\
+            filter(
+                dt_start__year=current_year - 1
+            ).\
+            aggregate(
+                last_year_interval=models.Sum(
+                    models.F('dt_end') -
+                    models.F('dt_start')
+                )
+            )
+
+        data = {
+            'week': {
+                'plot_data': {
+                    'series': [q['interval'].seconds for q in week_query],
+                    'xaxis': [q['day'] for q in week_query]
+                },
+                'additional_info': {
+                    'last_value': last_week_query['last_week_interval']
+                },
+            },
+            'month': {
+                'plot_data': {
+                    'series': [q['interval'].seconds for q in month_query],
+                    'xaxis': [q['day'] for q in month_query]
+                },
+                'additional_info': {
+                    'last_value': last_month_query['last_month_interval']
+                }
+            },
+            'year': {
+                'plot_data': {
+                    'series': [q['interval'].seconds for q in year_query],
+                    'xaxis': [q['month'] for q in year_query]
+                },
+                'additional_info': {
+                    'last_value': last_year_query['last_year_interval']
+                }
+            }
+        }
+
+        print(data)
+
         return Response(
             data=data,
             status=status.HTTP_200_OK

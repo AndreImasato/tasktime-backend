@@ -1,8 +1,8 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (CyclesView, DurationRankingView, LastModifiedTasks,
-                    OpenTasksView, ProjectsView, TasksView)
+from .views import (CyclesView, DurationRankingView, HistogramView,
+                    LastModifiedTasks, OpenTasksView, ProjectsView, TasksView)
 
 router = DefaultRouter()
 router.register(r'projects', ProjectsView, 'projects')
@@ -25,5 +25,10 @@ urlpatterns = [
         'latest-tasks/',
         LastModifiedTasks.as_view(),
         name="latest_tasks"
+    ),
+    path(
+        'total-time/',
+        HistogramView.as_view(),
+        name="total_time"
     ),
 ]
