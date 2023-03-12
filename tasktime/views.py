@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from django.db import models
 from django.db.models.fields import DateField
@@ -264,12 +264,13 @@ class HistogramView(APIView):
                 is_active=True,
                 dt_end__gte=models.F('dt_start')
             )
-        #TODO change for input date in querystring parameters
         #TODO more flexibility for testing
-        current_date = date.today()
-        current_week = current_date.isocalendar()[1]
-        current_month = current_date.month
-        current_year = current_date.year
+        date_target = request.GET.get('date_target', date.today())
+        if isinstance(date_target, str):
+            date_target = datetime.strptime(date_target, '%Y-%m-%d')
+        current_week = date_target.isocalendar()[1]
+        current_month = date_target.month
+        current_year = date_target.year
 
         # Week
         #TODO convert to the desired timezone
@@ -287,6 +288,15 @@ class HistogramView(APIView):
                 )
             ).\
             values('day', 'interval')
+        week_agg_total = week_query.aggregate(
+            total=models.Sum(
+                models.F('interval')
+            )
+        )['total']
+        if week_agg_total is not None:
+            week_total = week_agg_total.seconds
+        else:
+            week_total = 0
         # Month
         #TODO convert to the desired timezone
         month_query = cycle_base_query.\
@@ -305,6 +315,15 @@ class HistogramView(APIView):
                 )
             ).\
             values('day', 'interval')
+        month_agg_total = month_query.aggregate(
+            total=models.Sum(
+                models.F('interval')
+            )
+        )['total']
+        if month_agg_total is not None:
+            month_total = month_agg_total.seconds
+        else:
+            month_total = 0
         # Year
         #TODO convert to the desired timezone
         year_query = cycle_base_query.\
@@ -322,8 +341,18 @@ class HistogramView(APIView):
                 )
             ).\
             values('month', 'interval')
+        year_agg_total = year_query.aggregate(
+            total=models.Sum(
+                models.F('interval')
+            )
+        )['total']
+        if year_agg_total is not None:
+            year_total = year_agg_total.seconds
+        else:
+            year_agg_total = 0
         #TODO deal when it is the first week of the year
         #TODO convert to the desired timezone
+        #! instead of working with -1, work with datediff or something equivalent
         last_week_query = cycle_base_query.\
             filter(
                 dt_start__week=current_week - 1,
@@ -335,6 +364,7 @@ class HistogramView(APIView):
             ))
         #TODO deal when it is the first month of the year
         #TODO convert to the desired timezone
+        #! instead of working with -1, work with datediff or something equivalent
         last_month_query = cycle_base_query.\
             filter(
                 dt_start__month=current_month - 1,
@@ -346,6 +376,7 @@ class HistogramView(APIView):
                     models.F('dt_start')
                 )
             )
+        #! instead of working with -1, work with datediff or something equivalent
         last_year_query = cycle_base_query.\
             filter(
                 dt_start__year=current_year - 1
@@ -364,6 +395,7 @@ class HistogramView(APIView):
                     'xaxis': [q['day'] for q in week_query]
                 },
                 'additional_info': {
+                    'current_value': week_total,
                     'last_value': last_week_query['last_week_interval']
                 },
             },
@@ -373,6 +405,7 @@ class HistogramView(APIView):
                     'xaxis': [q['day'] for q in month_query]
                 },
                 'additional_info': {
+                    'current_value': month_total,
                     'last_value': last_month_query['last_month_interval']
                 }
             },
@@ -382,12 +415,11 @@ class HistogramView(APIView):
                     'xaxis': [q['month'] for q in year_query]
                 },
                 'additional_info': {
+                    'current_value': year_total,
                     'last_value': last_year_query['last_year_interval']
                 }
             }
         }
-
-        print(data)
 
         return Response(
             data=data,
