@@ -350,3 +350,44 @@ class TasktimeEndpointsTest(APITestCase):
             status.HTTP_204_NO_CONTENT,
             response.status_code
         )
+
+    def test_cycle_within_another_interval(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse(
+            'cycles-list'
+        )
+        response = self.client.post(
+            url,
+            format="json",
+            data={
+                'dt_start': datetime(2023, 2, 2, 7, tzinfo=pytz.UTC),
+                'is_active': True,
+                'task': self.task_1.id,
+            }
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response.status_code
+        )
+        self.assertTrue(
+            'message' in response.data
+        )
+        response = self.client.post(
+            url,
+            format="json",
+            data={
+                'dt_start': datetime(2023, 2, 2, 5, tzinfo=pytz.UTC),
+                'dt_end': datetime(2023, 2, 2, 7, tzinfo=pytz.UTC),
+                'is_active': True,
+                'task': self.task_1.id,
+            }
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response.status_code
+        )
+        self.assertTrue(
+            'message' in response.data
+        )

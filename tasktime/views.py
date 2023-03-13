@@ -106,6 +106,41 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
             data=request.data
         )
         if serializer.is_valid():
+            # validate if dt_start or dt_end is contained between
+            # another cycle of the corresponding task
+            data = serializer.validated_data
+            dt_start_validation = Cycles.objects.filter(
+                is_active=True,
+                created_by=data['user'],
+                task=data['task'],
+                dt_start__lte=data['dt_start'],
+                dt_end__gte=data['dt_start']
+            ).all()
+            if len(dt_start_validation) > 0:
+                return Response(
+                    data={
+                        'message': "A data de início já "
+                        "está contida em outro intervalo"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if 'dt_end' in data:
+                dt_end_validation = Cycles.objects.filter(
+                    is_active=True,
+                    created_by=data['user'],
+                    task=data['task'],
+                    dt_start__lte=data['dt_end'],
+                    dt_end__gte=data['dt_end']
+                ).all()
+                if len(dt_end_validation) > 0:
+                    return Response(
+                        data={
+                            'message': "A data de término já está "
+                            "contida em outro intervalo"
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
             serializer.save()
             return Response(
                 data=serializer.data,
