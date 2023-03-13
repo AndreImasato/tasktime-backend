@@ -224,8 +224,10 @@ class LastModifiedTasks(APIView):
                 project_public_id=models.F(
                     'project_id__public_id'
                 ),
-                last_modified_on=models.F(
-                    'cycles__modified_on'
+                last_modified_on=models.Max(
+                    models.F(
+                        'cycles__modified_on'
+                    )
                 )
             ).\
             values(
