@@ -124,7 +124,7 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            if 'dt_end' in data:
+            if 'dt_end' in data and data.get('dt_end') is not None:
                 dt_end_validation = Cycles.objects.filter(
                     is_active=True,
                     created_by=data['user'],
@@ -177,7 +177,7 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
                         },
                         status=status.HTTP_400_BAD_REQUEST
                     )
-            if 'dt_end' in data:
+            if 'dt_end' in data and data.get('dt_end') is not None:
                 dt_end_validation = Cycles.objects.filter(
                     is_active=True,
                     created_by=instance.created_by,
