@@ -99,6 +99,8 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
             is_active=True
         )
         return self.queryset
+    
+    #TODO do the same for an update/patch
 
     def create(self, request, *args, **kwargs):
         request.data['user'] = request.user.id
@@ -145,6 +147,58 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
             return Response(
                 data=serializer.data,
                 status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data=serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=partial
+        )
+        if serializer.is_valid():
+            data = serializer.validated_data
+            if 'dt_start' in data:
+                dt_start_validation = Cycles.objects.filter(
+                    is_active=True,
+                    created_by=instance.created_by,
+                    task=instance.task,
+                    dt_start__lte=data['dt_start'],
+                    dt_end__gte=data['dt_start']
+                ).all()
+                if len(dt_start_validation) > 0:
+                    return Response(
+                        data={
+                            'message': 'A data de início já '
+                            'está contida em outro intervalo'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            if 'dt_end' in data:
+                dt_end_validation = Cycles.objects.filter(
+                    is_active=True,
+                    created_by=instance.created_by,
+                    task=instance.task,
+                    dt_start__lte=data['dt_end'],
+                    dt_end__gte=data['dt_end']
+                ).all()
+                if len(dt_end_validation) > 0:
+                    return Response(
+                        data={
+                            'message': 'A data de término já '
+                            'está contida em outro intervalo'
+                        },
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            self.perform_update(serializer)
+            return Response(
+                data=serializer.data,
+                status=status.HTTP_200_OK
             )
         return Response(
             data=serializer.errors,

@@ -74,6 +74,20 @@ class TasktimeEndpointsTest(APITestCase):
             dt_start=datetime(2023, 2, 2, 6, tzinfo=pytz.UTC),
             dt_end=datetime(2023, 2, 2, 7, 30, tzinfo=pytz.UTC)
         )
+        cls.cycle_2 = Cycles.objects.create(
+            user=cls.user_1,
+            is_active=True,
+            task=cls.task_1,
+            dt_start=datetime(2023, 2, 2, 8, tzinfo=pytz.UTC),
+            dt_end=datetime(2023, 2, 2, 8, 30, tzinfo=pytz.UTC)
+        )
+        cls.cycle_3 = Cycles.objects.create(
+            user=cls.user_1,
+            is_active=True,
+            task=cls.task_1,
+            dt_start=datetime(2023, 2, 2, 5, tzinfo=pytz.UTC),
+            dt_end=datetime(2023, 2, 2, 5, 30, tzinfo=pytz.UTC)
+        )
 
     def test_without_authentication(self):
         """
@@ -351,7 +365,7 @@ class TasktimeEndpointsTest(APITestCase):
             response.status_code
         )
 
-    def test_cycle_within_another_interval(self):
+    def test_create_cycle_within_another_interval(self):
         self.client.force_authenticate(
             user=self.user_1
         )
@@ -382,6 +396,53 @@ class TasktimeEndpointsTest(APITestCase):
                 'dt_end': datetime(2023, 2, 2, 7, tzinfo=pytz.UTC),
                 'is_active': True,
                 'task': self.task_1.id,
+            }
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response.status_code
+        )
+        self.assertTrue(
+            'message' in response.data
+        )
+
+    def test_patch_cycle_within_another_interval(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        # Test patching dt_start within another interval
+        url = reverse(
+            'cycles-detail',
+            kwargs={
+                'public_id': self.cycle_2.public_id
+            }
+        )
+        response = self.client.patch(
+            url,
+            format="json",
+            data={
+                'dt_start': datetime(2023, 2, 2, 6, 30, tzinfo=pytz.UTC)
+            }
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response.status_code
+        )
+        self.assertTrue(
+            'message' in response.data
+        )
+        # Test patching dt_end within another interval
+        url = reverse(
+            'cycles-detail',
+            kwargs={
+                'public_id': self.cycle_3.public_id
+            }
+        )
+        response = self.client.patch(
+            url,
+            format="json",
+            data={
+                'dt_end': datetime(2023, 2, 2, 7, tzinfo=pytz.UTC)
             }
         )
         self.assertEqual(
