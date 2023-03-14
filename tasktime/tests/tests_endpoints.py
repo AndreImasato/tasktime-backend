@@ -350,3 +350,117 @@ class TasktimeEndpointsTest(APITestCase):
             status.HTTP_204_NO_CONTENT,
             response.status_code
         )
+
+    def test_create_cycle_within_another_interval(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        url = reverse(
+            'cycles-list'
+        )
+        response = self.client.post(
+            url,
+            format="json",
+            data={
+                'dt_start': datetime(2023, 2, 2, 7, tzinfo=pytz.UTC),
+                'is_active': True,
+                'task': self.task_1.id,
+            }
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response.status_code
+        )
+        self.assertTrue(
+            'message' in response.data
+        )
+        self.assertTrue(
+            'início' in response.data['message']
+        )
+        response = self.client.post(
+            url,
+            format="json",
+            data={
+                'dt_start': datetime(2023, 2, 2, 5, tzinfo=pytz.UTC),
+                'dt_end': datetime(2023, 2, 2, 7, tzinfo=pytz.UTC),
+                'is_active': True,
+                'task': self.task_1.id,
+            }
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response.status_code
+        )
+        self.assertTrue(
+            'message' in response.data
+        )
+        self.assertTrue(
+            'término' in response.data['message']
+        )
+
+    def test_patch_cycle_within_another_interval(self):
+        self.client.force_authenticate(
+            user=self.user_1
+        )
+        cycle_2 = Cycles.objects.create(
+            user=self.user_1,
+            is_active=True,
+            task=self.task_1,
+            dt_start=datetime(2023, 2, 2, 8, tzinfo=pytz.UTC),
+            dt_end=datetime(2023, 2, 2, 8, 30, tzinfo=pytz.UTC)
+        )
+        cycle_3 = Cycles.objects.create(
+            user=self.user_1,
+            is_active=True,
+            task=self.task_1,
+            dt_start=datetime(2023, 2, 2, 5, tzinfo=pytz.UTC),
+            dt_end=datetime(2023, 2, 2, 5, 30, tzinfo=pytz.UTC)
+        )
+        # Test patching dt_start within another interval
+        url = reverse(
+            'cycles-detail',
+            kwargs={
+                'public_id': cycle_2.public_id
+            }
+        )
+        response = self.client.patch(
+            url,
+            format="json",
+            data={
+                'dt_start': datetime(2023, 2, 2, 6, 30, tzinfo=pytz.UTC)
+            }
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response.status_code
+        )
+        self.assertTrue(
+            'message' in response.data
+        )
+        self.assertTrue(
+            'início' in response.data['message']
+        )
+        # Test patching dt_end within another interval
+        url = reverse(
+            'cycles-detail',
+            kwargs={
+                'public_id': cycle_3.public_id
+            }
+        )
+        response = self.client.patch(
+            url,
+            format="json",
+            data={
+                'dt_end': datetime(2023, 2, 2, 7, tzinfo=pytz.UTC)
+            }
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            response.status_code
+        )
+        self.assertTrue(
+            'message' in response.data
+        )
+        self.assertTrue(
+            'término' in response.data['message']
+        )
