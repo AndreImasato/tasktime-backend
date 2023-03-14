@@ -191,6 +191,11 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+if not DEBUG:
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = (
+        'rest_framework.renderers.JSONRenderer',
+    )
+
 # SIMPLE JWT
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(
