@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'rest_auth',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
     # Custom applications
     'users',
     'common',
@@ -92,7 +93,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -186,7 +187,8 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # SIMPLE JWT
@@ -217,4 +219,12 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
     'TOKEN_TYPE_CLAIM': 'token_type',
     'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
+}
+
+# SPECTACULAR DRF
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Task time management API',
+    'DESCRIPTION': 'Documentation for Tasktime API endpoints',
+    'VERSION': '0.1.0',
+    'SCHEMA_PATH_PREFFIX': r'/api/v[0-9]',
 }
