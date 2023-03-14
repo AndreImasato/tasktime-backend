@@ -99,8 +99,6 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
             is_active=True
         )
         return self.queryset
-    
-    #TODO do the same for an update/patch
 
     def create(self, request, *args, **kwargs):
         request.data['user'] = request.user.id
@@ -169,8 +167,8 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
                     created_by=instance.created_by,
                     task=instance.task,
                     dt_start__lte=data['dt_start'],
-                    dt_end__gte=data['dt_start']
-                ).all()
+                    dt_end__gte=data['dt_start'],
+                ).exclude(id=instance.id).all()
                 if len(dt_start_validation) > 0:
                     return Response(
                         data={
@@ -186,7 +184,7 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
                     task=instance.task,
                     dt_start__lte=data['dt_end'],
                     dt_end__gte=data['dt_end']
-                ).all()
+                ).exclude(id=instance.id).all()
                 if len(dt_end_validation) > 0:
                     return Response(
                         data={
