@@ -1,4 +1,8 @@
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
+                                   extend_schema, extend_schema_view)
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -18,8 +22,12 @@ User = get_user_model()
 
 # Create your views here.
 class LoginView(TokenObtainPairView):
+    __doc__ = _("View containing login with email and password option")
     serializer_class = LoginSerializer
 
+    @extend_schema(
+        summary=_("Endpoint to get JWT pair token (access and refresh tokens)")
+    )
     def post(self, request, *args, **kwargs):
         try:
             response = super().post(request, *args, **kwargs)
@@ -53,8 +61,12 @@ class LoginView(TokenObtainPairView):
 
 
 class LoginWithTokenView(APIView):
+    __doc__ = _("View containing login with token option")
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary=_("Endpoint to login with JWT access token")
+    )
     def post(self, request):
         user_agent, platform, ip_address = Utils.get_request_info(
             request
