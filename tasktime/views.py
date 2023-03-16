@@ -216,7 +216,8 @@ class DurationRankingView(APIView):
                 is_active=True,
                 cycles__created_by=user,
                 cycles__dt_end__gte=models.F('cycles__dt_start'),
-                cycles__is_active=True
+                cycles__is_active=True,
+                project_id__is_active=True
             ).\
             annotate(
                 task_name=models.F('name'),
