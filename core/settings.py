@@ -235,5 +235,5 @@ SPECTACULAR_SETTINGS = {
     'TITLE': _('Task time management API'),
     'DESCRIPTION': _('Documentation for Tasktime API endpoints'),
     'VERSION': '0.1.0',
-    'SCHEMA_PATH_PREFFIX': r'/api/v[0-9]',
+    'SCHEMA_PATH_PREFIX': r'/api/v[0-9]',
 }
