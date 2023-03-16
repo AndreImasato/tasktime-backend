@@ -12,7 +12,9 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+
 import environ
+from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -230,8 +232,8 @@ SIMPLE_JWT = {
 
 # SPECTACULAR DRF
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'Task time management API',
-    'DESCRIPTION': 'Documentation for Tasktime API endpoints',
+    'TITLE': _('Task time management API'),
+    'DESCRIPTION': _('Documentation for Tasktime API endpoints'),
     'VERSION': '0.1.0',
     'SCHEMA_PATH_PREFFIX': r'/api/v[0-9]',
 }
