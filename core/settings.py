@@ -28,6 +28,8 @@ if ENVIRONMENT == 'local':
 # "docker", etc)
 elif ENVIRONMENT == 'docker':
     env_path = os.path.join(BASE_DIR, 'envs', 'docker', '.env')
+elif ENVIRONMENT == 'stack':
+    env_path = os.path.join(BASE_DIR, 'envs', 'stack', '.env')
 else:
     env_path = None
 
