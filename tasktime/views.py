@@ -124,7 +124,7 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            if 'dt_end' in data:
+            if 'dt_end' in data and data.get('dt_end') is not None:
                 dt_end_validation = Cycles.objects.filter(
                     is_active=True,
                     created_by=data['user'],
@@ -177,7 +177,7 @@ class CyclesView(ModelViewSet): # pylint: disable=R0901
                         },
                         status=status.HTTP_400_BAD_REQUEST
                     )
-            if 'dt_end' in data:
+            if 'dt_end' in data and data.get('dt_end') is not None:
                 dt_end_validation = Cycles.objects.filter(
                     is_active=True,
                     created_by=instance.created_by,
@@ -216,7 +216,8 @@ class DurationRankingView(APIView):
                 is_active=True,
                 cycles__created_by=user,
                 cycles__dt_end__gte=models.F('cycles__dt_start'),
-                cycles__is_active=True
+                cycles__is_active=True,
+                project_id__is_active=True
             ).\
             annotate(
                 task_name=models.F('name'),
@@ -273,7 +274,8 @@ class OpenTasksView(APIView):
                 cycles__created_by=user,
                 is_active=True,
                 cycles__is_active=True,
-                cycles__dt_end__isnull=True
+                cycles__dt_end__isnull=True,
+                project_id__is_active=True
             ).\
             annotate(
                 project_public_id=models.F(
@@ -306,6 +308,7 @@ class LastModifiedTasks(APIView):
                 cycles__created_by=user,
                 is_active=True,
                 cycles__is_active=True,
+                project_id__is_active=True
             ).\
             annotate(
                 project_public_id=models.F(
@@ -350,7 +353,9 @@ class HistogramView(APIView):
                 dt_start__isnull=False,
                 created_by=user,
                 is_active=True,
-                dt_end__gte=models.F('dt_start')
+                dt_end__gte=models.F('dt_start'),
+                task_id__is_active=True,
+                task_id__project_id__is_active=True
             )
         date_target = request.GET.get('date_target', date.today())
         if isinstance(date_target, str):
@@ -436,7 +441,7 @@ class HistogramView(APIView):
         if year_agg_total is not None:
             year_total = year_agg_total.seconds
         else:
-            year_agg_total = 0
+            year_total = 0
         #TODO deal when it is the first week of the year
         #TODO convert to the desired timezone
         last_week = date_target - timedelta(weeks=1)
