@@ -1,3 +1,4 @@
+# pylint: disable=C0209
 """
 Contains utilitaries functions
 """
@@ -35,3 +36,20 @@ class Utils:
         platform = request.headers.get('Sec-Ch-Ua-Platform')
         ip_address = cls.get_client_ip(request)
         return (user_agent, platform, ip_address)
+
+    @classmethod
+    def parse_interval(cls, interval: float) -> str:
+        """
+        Helper method to parse a interval to
+        string format 00:00:00
+        """
+        hours = interval // 3600
+        hours_remainder = interval % 3600
+        minutes = hours_remainder // 60
+        minutes_remainder = hours_remainder % 60
+        parsed_interval = "{hour}:{minute}:{sec}".format(
+            hour=str(hours).zfill(2),
+            minute=str(minutes).zfill(2),
+            sec=str(minutes_remainder).zfill(2)
+        )
+        return parsed_interval

@@ -35,7 +35,7 @@ services:
           memory: 128M
     build:
       context: ./
-      dockerfile: Dockerfile
+      dockerfile: envs/docker/Dockerfile
     ports:
       - ${WEB_LOCAL_PORT}:8000
     volumes:

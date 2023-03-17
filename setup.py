@@ -20,7 +20,7 @@ os.chdir(
 
 setup(
     name="TaskTime Backend",
-    version="0.1",
+    version="0.1.0",
     packages=find_packages(),
     include_package_data=True,
     license="BSD License",

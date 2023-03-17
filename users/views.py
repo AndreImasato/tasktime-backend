@@ -1,7 +1,12 @@
 from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (OpenApiExample, OpenApiParameter,
+                                   extend_schema, extend_schema_view)
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -17,8 +22,12 @@ User = get_user_model()
 
 # Create your views here.
 class LoginView(TokenObtainPairView):
+    __doc__ = _("View containing login with email and password option")
     serializer_class = LoginSerializer
 
+    @extend_schema(
+        summary=_("Endpoint to get JWT pair token (access and refresh tokens)")
+    )
     def post(self, request, *args, **kwargs):
         try:
             response = super().post(request, *args, **kwargs)
@@ -49,6 +58,37 @@ class LoginView(TokenObtainPairView):
             return response
         except InvalidToken as e:
             raise e
+
+
+class LoginWithTokenView(APIView):
+    __doc__ = _("View containing login with token option")
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary=_("Endpoint to login with JWT access token")
+    )
+    def post(self, request):
+        user_agent, platform, ip_address = Utils.get_request_info(
+            request
+        )
+        user = request.user
+        data = {
+            "user": user.id,
+            "access_type": AccessTypes.ACCESS_TOKEN,
+            "user_agent": user_agent,
+            "platform": platform,
+            "ip_addres": ip_address
+        }
+        access_log_data = UserAccessLogsSerializer(
+            data=data
+        )
+        if access_log_data.is_valid():
+            access_log_data.save()
+            return Response("OK", status=status.HTTP_200_OK)
+        return Response(
+            access_log_data.errors,
+            status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class UserView(ModelViewSet):   # pylint: disable=R0901

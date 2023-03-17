@@ -23,6 +23,7 @@ README.md
 LICENSE
 
 *.json
+!freshdb.json
 
 
 static/
