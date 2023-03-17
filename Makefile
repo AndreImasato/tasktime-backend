@@ -17,7 +17,7 @@ test:
 commit-test:
 	python manage.py test --exclude-tag=exclude_git_commit
 
-build:
+build-containers:
 	@echo "Building docker images..."
 	bash build-containers.sh
 
