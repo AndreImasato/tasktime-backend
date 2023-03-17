@@ -54,8 +54,14 @@ To stop the containers and bring them down, run the command
 make down-containers
 ```
 
-### About the Backend (WIP)
+### About the Backend
 
 This backend is built based on [Django Rest Framework](https://www.django-rest-framework.org/) combined with a few other packages.
 
-The API documentation can be found by accessing ```http://<your-ip-address>/docs/```, which is built using [drf-spectactular](https://drf-spectacular.readthedocs.io/en/latest/).
+The API documentation can be found by accessing ```http://<your-ip-address>/docs/```, which is built using [drf-spectactular](https://drf-spectacular.readthedocs.io/en/latest/). The Django admin panel can be accessed as well in the folloing URL ``http://<your-ip-address/admin/>`.
+
+**Note:** ```your-ip-address``` can be your localhost (and port, in case the default 80 port couldn't be used) you your Nginx docker container host. To get this container local ip address, run the following command.
+
+```bash
+docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' tasktime_nginx
+```
