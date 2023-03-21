@@ -220,7 +220,10 @@ class DurationRankingView(APIView):
                 project_id__is_active=True
             ).\
             annotate(
-                task_name=models.F('name'),
+                task_name=models.F('name')
+            ).\
+            values('task_name').\
+            annotate(
                 interval=models.Sum(
                     models.F('cycles__dt_end') - models.F('cycles__dt_start')
                 )
@@ -238,7 +241,10 @@ class DurationRankingView(APIView):
                 tasks__cycles__is_active=True
             ).\
             annotate(
-                project_name=models.F('name'),
+                project_name=models.F('name')
+            ).\
+            values('project_name').\
+            annotate(
                 interval=models.Sum(
                     models.F('tasks__cycles__dt_end') -
                     models.F('tasks__cycles__dt_start')
@@ -248,11 +254,17 @@ class DurationRankingView(APIView):
             order_by('-interval')[0:5]
         data = {
             'projects': {
-                'series': [q['interval'].seconds for q in projects_summary],
+                'series': [
+                    int(q['interval'].total_seconds())
+                    for q in projects_summary
+                ],
                 'labels': [q['project_name'] for q in projects_summary]
             },
             'tasks': {
-                'series': [q['interval'].seconds for q in tasks_summary],
+                'series': [
+                    int(q['interval'].total_seconds())
+                    for q in tasks_summary
+                ],
                 'labels': [q['task_name'] for q in tasks_summary]
             }
         }
@@ -345,7 +357,7 @@ class LastModifiedTasks(APIView):
 class HistogramView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request): # pylint: disable=R0914,R0912
         #TODO detect period
         user = request.user
         cycle_base_query = Cycles.objects.\
@@ -386,7 +398,7 @@ class HistogramView(APIView):
             )
         )['total']
         if week_agg_total is not None:
-            week_total = week_agg_total.seconds
+            week_total = int(week_agg_total.total_seconds())
         else:
             week_total = 0
         # Month
@@ -413,7 +425,7 @@ class HistogramView(APIView):
             )
         )['total']
         if month_agg_total is not None:
-            month_total = month_agg_total.seconds
+            month_total = int(month_agg_total.total_seconds())
         else:
             month_total = 0
         # Year
@@ -439,7 +451,7 @@ class HistogramView(APIView):
             )
         )['total']
         if year_agg_total is not None:
-            year_total = year_agg_total.seconds
+            year_total = year_agg_total.total_seconds()
         else:
             year_total = 0
         #TODO deal when it is the first week of the year
@@ -455,7 +467,9 @@ class HistogramView(APIView):
                 models.F('dt_start')
             ))
         if last_week_query['last_week_interval'] is not None:
-            last_week_value = last_week_query['last_week_interval'].seconds
+            last_week_value = int(
+                last_week_query['last_week_interval'].total_seconds()
+            )
         else:
             last_week_value = 0
         #TODO deal when it is the first month of the year
@@ -473,7 +487,9 @@ class HistogramView(APIView):
                 )
             )
         if last_month_query['last_month_interval'] is not None:
-            last_month_value = last_month_query['last_month_interval'].seconds
+            last_month_value = int(
+                last_month_query['last_month_interval'].total_seconds()
+            )
         else:
             last_month_value = 0
         last_year = date_target - timedelta(days=360)
@@ -488,14 +504,19 @@ class HistogramView(APIView):
                 )
             )
         if last_year_query['last_year_interval'] is not None:
-            last_year_value = last_year_query['last_year_interval'].seconds
+            last_year_value = int(
+                last_year_query['last_year_interval'].total_seconds()
+            )
         else:
             last_year_value = 0
 
         data = {
             'week': {
                 'plot_data': {
-                    'series': [q['interval'].seconds for q in week_query],
+                    'series': [
+                        int(q['interval'].total_seconds())
+                        for q in week_query
+                    ],
                     'xaxis': [q['day'] for q in week_query]
                 },
                 'additional_info': {
@@ -505,7 +526,10 @@ class HistogramView(APIView):
             },
             'month': {
                 'plot_data': {
-                    'series': [q['interval'].seconds for q in month_query],
+                    'series': [
+                        int(q['interval'].total_seconds())
+                        for q in month_query
+                    ],
                     'xaxis': [q['day'] for q in month_query]
                 },
                 'additional_info': {
@@ -515,7 +539,10 @@ class HistogramView(APIView):
             },
             'year': {
                 'plot_data': {
-                    'series': [q['interval'].seconds for q in year_query],
+                    'series': [
+                        int(q['interval'].total_seconds())
+                        for q in year_query
+                    ],
                     'xaxis': [q['month'] for q in year_query]
                 },
                 'additional_info': {
