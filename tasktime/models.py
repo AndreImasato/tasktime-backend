@@ -126,7 +126,7 @@ class Cycles(CustomUserLogBaseModel):
                 "Start datetime is greater than corresponding end datetime"
             )
         interval = self.dt_end - self.dt_start
-        return interval.seconds
+        return int(interval.total_seconds())
 
     @property
     def parsed_duration(self):

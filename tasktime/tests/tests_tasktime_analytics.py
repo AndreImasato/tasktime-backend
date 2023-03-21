@@ -82,7 +82,7 @@ class AnalyticsTests(APITestCase):
             is_active=True,
             task=cls.tasks['task_8'],
             dt_start=datetime(2023, 3, 1, 5, tzinfo=pytz.UTC),
-            dt_end=datetime(2023, 3, 1, 9, tzinfo=pytz.UTC)
+            dt_end=datetime(2023, 3, 1, 9, 1, tzinfo=pytz.UTC)
         )
         cls.tasks['task_9'] = TaskFactory(
             name="Task 9",
@@ -96,7 +96,7 @@ class AnalyticsTests(APITestCase):
             is_active=True,
             task=cls.tasks['task_9'],
             dt_start=datetime(2023, 3, 1, 3, tzinfo=pytz.UTC),
-            dt_end=datetime(2023, 3, 1, 10, tzinfo=pytz.UTC)
+            dt_end=datetime(2023, 3, 3, 10, tzinfo=pytz.UTC)
         )
         cls.tasks['task_10'] = TaskFactory(
             name="Task 10",
@@ -132,7 +132,9 @@ class AnalyticsTests(APITestCase):
             dt_start=datetime(2023, 3, 1, 4, tzinfo=pytz.UTC)
         )
         cls.expected_project_ranking = ['Project 2', 'Project 4', 'Project 6', 'Project 5', 'Project 3']
-        cls.expected_task_ranking = ['Task 9', 'Task 6', 'Task 5', 'Task 4', 'Task 8']
+        cls.expected_project_series = [205200, 28860, 21600, 18000, 10800]
+        cls.expected_task_ranking = ['Task 9', 'Task 6', 'Task 5', 'Task 8', 'Task 4']
+        cls.expected_task_series = [198000, 21600, 18000, 14460, 14400]
         # Last month and week test
         project_feb = ProjectFactory(
             name="Project Feb 001",
@@ -209,8 +211,16 @@ class AnalyticsTests(APITestCase):
             tuple(response.data['projects']['labels'])
         )
         self.assertEqual(
+            tuple(self.expected_project_series),
+            tuple(response.data['projects']['series'])
+        )
+        self.assertEqual(
             tuple(self.expected_task_ranking),
             tuple(response.data['tasks']['labels'])
+        )
+        self.assertEqual(
+            tuple(self.expected_task_series),
+            tuple(response.data['tasks']['series'])
         )
 
     def test_open_tasks(self):
